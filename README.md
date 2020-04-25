@@ -6,4 +6,11 @@ This program takes an ABAQUS input file (typically .inp) and displays the mesh. 
 - Color elements based on section
 - Drag and rotate model (arcball-style, as is typical in CAD-programs)
 
+## Usage and demo
+To launch program and read the included simple example input file "tubes.inp", run:
+``new_ansa abaqus_examples/tubes.inp
+
+![](demo.gif)
+
+
 
