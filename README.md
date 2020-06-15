@@ -19,6 +19,8 @@ To run the example file "tubes.inp", on Linux enter:
 ## TODO:
 Makefile, otherwise the vscode project file should help. 
 
+Feature edge detection
+
 Support more element types
 
 Catch input file errors
