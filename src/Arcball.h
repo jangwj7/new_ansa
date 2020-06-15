@@ -1,19 +1,12 @@
-//
-//  Arcball.h
-//  Arcball
-//
-//  Created by Saburo Okita on 12/03/14.
-//  Copyright (c) 2014 Saburo Okita. All rights reserved.
-//
-
-#ifndef __Arcball__Arcball__
-#define __Arcball__Arcball__
+#ifndef ARCBALL_h
+#define ARCBALL_h
 
 #include <iostream>
 
 #include <GLFW/glfw3.h>
 
 #include "../glm/glm.hpp"
+#include "../glm/gtc/quaternion.hpp"
 #include "../glm/gtc/type_ptr.hpp"
 #include "../glm/gtc/matrix_transform.hpp"
 #include "../glm/gtx/rotate_vector.hpp"
@@ -46,4 +39,4 @@ public:
     
 };
 
-#endif /* defined(__Arcball__Arcball__) */
+#endif 

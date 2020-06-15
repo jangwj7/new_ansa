@@ -1,3 +1,5 @@
+#ifndef MISC_STRING_FUNCTIONS_H
+#define MISC_STRING_FUNCTIONS_H 
 #include <vector>
 #include <string>
 #include <unordered_map>
@@ -12,3 +14,4 @@ bool is_comment(std::string);
 void append_newline_to_textfile(std::string filename);
 std::unordered_map<std::string,std::string> options_map(std::string line);
 }
+#endif

@@ -17,6 +17,7 @@ uniform bool hide_show_mesh;
 
 void main()
 {
+    // Set up lighting...
     // ambient
     float ambientStrength = 0.1;
     vec3 ambient = ambientStrength * lightColor;

@@ -2,7 +2,6 @@
 // a Mesh has nodes, elements, pid, mid.
 #include "read_abaqus.h"
 #include "misc_string_functions.h"
-#include "element_geometries.h"
 #include "../glm/gtx/normal.hpp"
 #include <algorithm>
 #include <fstream>
@@ -157,21 +156,38 @@ void Mesh::read_file(std::string filename){
     // Want to save max xyz positional values for the sake of zooming!
     for (auto& node: nodes)
     {
+        // Want to find min and max nodal x values
         if (node.x > max_x)
         {
             max_x = node.x;
         }
-        if (node.y > max_y)
+        if (node.x < min_x)
+        {
+            min_x = node.x;
+        }
+        // min and max y
+        if (node.y > max_y)        
         {
             max_y = node.y;
         }
+        if (node.y < min_y)        
+        {
+            min_y = node.y;
+        }
+        // min and max z
         if (node.z > max_z)
         {
             max_z = node.z;
         }
+        if (node.z < min_z)
+        {
+            min_z = node.z;
+        }
     }
     // Calculate CoG
-    calculate_cog(this->nodes);
+    cog_x = (max_x + min_x)/2;
+    cog_y = (max_y + min_y)/2;
+    cog_z = (max_z + min_z)/2;
     // about();
 };
 

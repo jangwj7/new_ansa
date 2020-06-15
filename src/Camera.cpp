@@ -5,6 +5,13 @@
 #include "../glm/gtx/rotate_vector.hpp"
 #include "../glm/gtc/matrix_inverse.hpp"
 
+// New arcball implementation
+
+
+// end new arcball
+
+
+
 void Camera::set_viewport(int x,int y,int width, int height){
     glViewport(x,y,width,height);
 };
@@ -12,22 +19,36 @@ void Camera::set_viewport(int x,int y,int width, int height){
 void Camera::set_position(float x,float y,float z){
     this->position = glm::vec3(x,y,z);
 };
-Camera::Camera( glm::vec3 position, glm::vec3 front, glm::vec3 up,
-                int window_width, int window_height, float roll_speed, bool x_axis, bool y_axis )
+Camera::Camera(glm::vec3 position, glm::vec3 front, glm::vec3 up, // <-- camera related!
+                int window_width, int window_height, // <-- window related
+                float roll_speed, bool x_axis, bool y_axis ) // <-- arcball related 
 {
+    // camera related
     this->position = position;
     this->front = front;
     this->up = up;
     this->view = get_lookAt();
-    // Arcball
+    // Window related
     this->windowWidth  = window_width;
     this->windowHeight = window_height;
     
+    // new arcball
+
+    // glm uses the following format for quaternions: w,x,y,z.
+    //        w,    x,    y,    z
+    glm::quat qOne(1.0, 0.0, 0.0, 0.0);
+    glm::vec3 vZero(0.0, 0.0, 0.0);
+
+    mVDown    = vZero;
+    mVNow     = vZero;
+    mQDown    = qOne;
+    mQNow     = qOne;
+
+    // old arcball 
     this->mouseEvent = 0;
     this->rollSpeed  = roll_speed;
     this->angle      = 0.0f;
     this->camAxis    = glm::vec3(0.0f, 0.0f, -1.0f);
-    
     this->xAxis = x_axis;
     this->yAxis = y_axis;
 };
@@ -78,7 +99,7 @@ glm::vec3 Camera::toScreenCoord( double x, double y ) {
  * Event 1: at the start of tracking, recording the first cursor pos
  * Event 2: tracking of subsequent cursor movement
  */
-void Camera::mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
+    void Camera::mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
     mouseEvent = (action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_LEFT);
 }

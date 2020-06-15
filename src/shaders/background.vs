@@ -1,6 +1,4 @@
 #version 330 core
-
-
 void main()
 {
     uint idx = uint(gl_VertexID);

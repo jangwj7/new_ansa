@@ -140,8 +140,10 @@ public:
     float max_x = 0;
     float max_y = 0;
     float max_z = 0;
-
-
+    float min_x = 0;    
+    float min_y = 0;    
+    float min_z = 0;
+    
     unsigned int get_pid_counter(){return pid_counter;};
     std::vector<glm::vec3> world_space_positions;
     std::unordered_map<unsigned int,unsigned int>  global2local_node;

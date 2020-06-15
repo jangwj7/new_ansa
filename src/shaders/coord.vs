@@ -12,7 +12,6 @@ out vec3 Color;
 
 void main()
 {
-    // FragPos     = vec3(ModelMatrix * vec4(VertexPosition, 1.0));
     Color       = VertexColor;
     gl_Position = ProjectionMatrix * ViewMatrix * ModelMatrix * vec4(VertexPosition, 1.0);
 }

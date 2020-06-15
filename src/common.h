@@ -1,3 +1,5 @@
+#ifndef COMMON_H
+#define COMMON_H
 #include <vector>
 #include <string>
 #include "stb_image.h"
@@ -9,3 +11,4 @@ namespace common
     std::vector<float> read_vertex_file(std::string input_file);
 
 } 
+#endif

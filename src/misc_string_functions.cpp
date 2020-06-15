@@ -38,9 +38,11 @@ std::unordered_map<std::string,std::string> misc::options_map(std::string line){
             options[key] = value;
             // std::cout << "key <-> value:" << key << "<->" << value << "\n";
         }
+        // TODO: Maybe print something about keyword has no options?
+        // But it's not always an issue..
         catch(const std::exception& e)
         {
-            std::cout << "no value found for key " << key << "\n";
+            // std::cout << "no value found for key " << key << "\n";
         }
         
     }

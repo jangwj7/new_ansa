@@ -1,17 +1,4 @@
-//
-//  Arcball.cpp
-//  Arcball
-//
-//  Created by Saburo Okita on 12/03/14.
-//  Copyright (c) 2014 Saburo Okita. All rights reserved.
-//
-
 #include "Arcball.h"
-
-/**
- * Constructor.
- * @param roll_speed the speed of rotation
- */
 Arcball::Arcball( int window_width, int window_height, GLfloat roll_speed, bool x_axis, bool y_axis ) {
     this->windowWidth  = window_width;
     this->windowHeight = window_height;

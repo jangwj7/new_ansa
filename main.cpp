@@ -8,15 +8,18 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtx/string_cast.hpp"
-#include "src/read_abaqus.h"
+#include "src/window.h"
 #include "src/read_abaqus.h"
 #include "src/shaders/shader.h"
 #include "src/Camera.h"
 #include "src/common.h"
+#include "src/Text.h"
 #include <iostream>
 #include <typeinfo>
 #include <cstdlib>
 #include <fstream>
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
 static bool pid_window(bool* p_open, Mesh& mesh);
 static bool element_window(bool* p_open, Mesh& mesh);
@@ -28,14 +31,11 @@ void scroll_callback(GLFWwindow *window, double sideways, double z);
 void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
 void cursorCallback(GLFWwindow *window, double x, double y);
 
+
+// TODO: global variables, maybe camera belongs to the mesh or window object?
 const unsigned int SCR_WIDTH    = 800;
 const unsigned int SCR_HEIGHT   = 600;
-
-
-
-// Create camera
-// pos, front, up
-Camera camera(glm::vec3(0.0f, 0.0f, 0.0f),
+Camera camera(glm::vec3(0.0f, 0.0f, 1.0f),
               glm::vec3(0.0f, 0.0f, -1.0f),
               glm::vec3(0.0f, 1.0f, 0.0f),
               SCR_WIDTH,
@@ -46,67 +46,55 @@ Camera camera(glm::vec3(0.0f, 0.0f, 0.0f),
 Camera coord_camera(glm::vec3(0.0f, 0.0f, 300.0f),
               glm::vec3(0.0f, 0.0f, -1.0f),
               glm::vec3(0.0f, 1.0f, 0.0f),
-              SCR_WIDTH,
-              SCR_HEIGHT,
+              SCR_WIDTH-175,
+              SCR_HEIGHT-200,
               0.15f,
               true,
               true);
 
 int main(int argc, char* argv[])
 {
-    Mesh mesh;
-    // read input files
-    if (argc > 1)
-    {
-        for (int i = 0; i < argc; i++)
-        {
-            mesh.read_file(std::string(argv[1]));
-            // std::cout << "Reading file " << argv[1] << "\n";
-        }
-    }
-    // Adjust camera according to CoG and max coords
-    camera.set_position(0,0,0);
-    
+    // Create window and input handler
     if (!glfwInit())
     {
         std::cout << "Initialization failed\n";
     }
-    // Want to use openGL 3.3
+    // openGL 3.3
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_SAMPLES, 4);
     // TODO: use last parameters to make full screen?
-    GLFWwindow *window = glfwCreateWindow(800, 600, "viewer", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "new_ansa", NULL, NULL);
+    // window failed :(
     if (window == NULL)
     {
-        // window wasnt created
-        std::cout << "Failed to create window\n";
         glfwTerminate();
-        return -1;
     }
     glfwMakeContextCurrent(window);
+    Mesh mesh;    
+    // read user input
+    if (argc > 1)
+    {
+        for (int i = 0; i < argc; i++)
+        {
+            mesh.read_file(std::string(argv[1]));
+            // Adjust camera according to CoG and max coords
+            camera.set_position(mesh.cog_x,mesh.cog_y,mesh.max_z);
+        }
+    }
+    else
+    {
+        camera.set_position(0,0,0);
+    }
     // Need to init glad before we call openGL
     gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+    // failed glad :(
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        std::cout << "Failed GLAD" << std::endl;
         return -1;
     }
-
-
-
-    // set icon
-    // GLFWimage icon[1];
-    // icon[0].pixels = SOIL_load_image("src/resources/icon.png", &icon[0].width, &icon[0].height, 0, SOIL_LOAD_RGBA);
-    // glfwSetWindowIcon(window, 1, icon);
-    // release data
-    // SOIL_free_image_data(icon[0].pixels);
-    // load an image file directly as a new OpenGL texture 
-    // ====================
-    // Texture 1
-    // ====================
-    // Load, create texture and generate mipmaps
+    // Load & create texture
     GLuint icon_node_marker = common::generate_texture("src/resources/icon_node_marker.png",true);
     GLuint icon_show_nodes  = common::generate_texture("src/resources/icon_show_nodes.png",true);
     GLuint icon_show_mesh   = common::generate_texture("src/resources/icon_show_mesh.png",true);
@@ -116,6 +104,9 @@ int main(int argc, char* argv[])
     glfwSetScrollCallback(window,scroll_callback);
     glfwSetCursorPosCallback(window, cursorCallback);
     glfwSetMouseButtonCallback(window, mouseButtonCallback);
+    
+    
+    
     // To enable depth & anti-aliasing on lines
     glEnable(GL_DEPTH_TEST);
     // To enable different point sizes
@@ -127,6 +118,13 @@ int main(int argc, char* argv[])
     // anti-alias lines
     glEnable(GL_MULTISAMPLE);  
 
+    // Text object init
+    Text text("src/Roboto-Regular.ttf",
+            64,
+            "src/shaders/text.vs",
+            "src/shaders/text.fs");
+    text.text_shader->setInt("text", 0);
+
     // ---- SHADERS ----------------------------
     // background - gradient background behind mesh
     // base - mesh shader 
@@ -137,6 +135,7 @@ int main(int argc, char* argv[])
     Shader coord_shader("src/shaders/coord.vs","src/shaders/coord.fs");
     Shader node_shader("src/shaders/nodes.vs","src/shaders/nodes.fs");
     // ---- END SHADERS ------------------------
+    // set ut VAO's and VBO's
     unsigned int background_VAO;
     glGenVertexArrays(1, &background_VAO);
     glBindVertexArray(background_VAO);
@@ -155,7 +154,7 @@ int main(int argc, char* argv[])
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
     glEnableVertexAttribArray(3);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void *)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void *) 0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void *)(3 * sizeof(float)));
     glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void *)(4 * sizeof(float)));
     glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void *)(7 * sizeof(float)));
@@ -186,11 +185,10 @@ int main(int argc, char* argv[])
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-    // Setup Dear ImGui context
+    // Setup "Dear ImGui" context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
-    // Setup Platform/Renderer bindings
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     const char *glsl_version = "#version 330";
     ImGui_ImplOpenGL3_Init(glsl_version);
@@ -204,33 +202,24 @@ int main(int argc, char* argv[])
     float near_depth_range  = 0.1;
     float far_depth_range   = 1000.0;
     glm::mat4 model = glm::mat4(1.0f);
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, near_depth_range, far_depth_range);
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)camera.windowWidth / (float)camera.windowHeight, near_depth_range, far_depth_range);
     // ortho callsign:left,right,bottom,top,zNear,zFar
     // float aspect = (float)SCR_WIDTH / (float)SCR_HEIGHT;
     
-    // glm::mat4 projection = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, 0.1f, 100.0f);
-    // glm::mat4 projection = glm::ortho( 0.f, (float)SCR_WIDTH, 0.f,(float)SCR_HEIGHT, near_depth_range, far_depth_range );
-    bool hide_show_nodes=false, hide_show_mesh=true;
-    // gradient color for background won't change each loop so set them now anyway..
-    
+    bool hide_show_nodes=false, hide_show_mesh=true;    
     while (!glfwWindowShouldClose(window))
     {
-
-        // 1. Events
         if (io.WantCaptureMouse == false or io.WantCaptureMouse == false)
         {
             processInput(window);
         }
         
-        // Set viewport of comeplete screen
+        // Set viewport of complete screen
         camera.set_viewport(0,0,camera.windowWidth,camera.windowHeight);
-        // 2. Render
         // Clear the screen and reset to specific color
-        // glClearColor(1.f, 1.f, 1.f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
         // Draw background gradient
         glDisable(GL_DEPTH_TEST);
-        // base_shader.setVec2("resolution", glm::vec2(camera.windowWidth,camera.windowHeight));
         background_shader.use();
         background_shader.setVec2("resolution", camera.windowWidth,camera.windowHeight);
         background_shader.setVec3("top_color",   glm::vec3(0.2,0.278,0.34));
@@ -267,8 +256,7 @@ int main(int argc, char* argv[])
             glActiveTexture(GL_TEXTURE0);
             glDrawArrays(GL_POINTS, 0, mesh.faces_vertices.size());
         }
-        
-        // draw coord system
+        // draw coord system in different viewport, on top of everything else
         coord_camera.set_viewport(camera.windowWidth-175,camera.windowHeight-200,175,175);
         coord_shader.use();
         glBindVertexArray(coord_VAO);
@@ -277,7 +265,30 @@ int main(int argc, char* argv[])
         coord_shader.setMat4("ModelMatrix", rotated_model);
         glClear(GL_DEPTH_BUFFER_BIT);
         glDrawArrays(GL_TRIANGLES, 0, coord_system.size());
-        // render your GUI
+        // render coord system text
+        text.text_shader->use();
+        glm::mat4 temp = glm::ortho(0.0f, (float)camera.windowWidth-175, 0.0f, (float)camera.windowHeight);
+        text.text_shader->setMat4("ProjectionMatrix", temp);
+        text.text_shader->setMat4("ModelMatrix", rotated_model);
+        text.text_shader->setMat4("ViewMatrix", coord_camera.view);
+        // TODO: should text always be perp. towards screen or follow axis pointer?
+        text.render_text("X",
+                        0.0f,
+                        0.0f,
+                        0.0f,
+                        2,
+                        glm::vec3(0.8,0,0));
+        // text.render_text("Y",
+        //                 50,
+        //                 50,
+        //                 1,
+        //                 glm::vec3(0.8,0,0));
+        // text.render_text("Z",
+        //                 50,
+        //                 50,
+        //                 1,
+        //                 glm::vec3(0.8,0,0));                        
+        // render GUI
         bool open = false, save = false;
         static bool pid_window_bool;
         static bool element_window_bool;
@@ -330,7 +341,7 @@ int main(int argc, char* argv[])
         pid_window(&pid_window_bool,mesh);
         element_window(&element_window_bool,mesh);
         
-        // overlay 
+        // bottom left overlay with name and "version" 
         bool overlay = true;
         int corner = 0;
         const float DISTANCE = 10.0f;
@@ -340,7 +351,7 @@ int main(int argc, char* argv[])
         ImGui::SetNextWindowBgAlpha(0.6f); // Transparent background
         if (ImGui::Begin("overlay", &overlay, (corner != -1 ? ImGuiWindowFlags_NoMove : 0) | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
         {
-            ImGui::Text("view v0.1");
+            ImGui::Text("new_ansa v0.2");
             ImGui::Separator();
             std::string text = mesh.get_filename();
             ImGui::Text(text.c_str());
@@ -359,22 +370,7 @@ int main(int argc, char* argv[])
             glBufferData(GL_ARRAY_BUFFER,
                  mesh.faces_vertices.size() * sizeof(mesh.faces_vertices.front()),
                  &mesh.faces_vertices.front(),
-                 GL_STATIC_DRAW);
-            int counter = 1;
-            std::cout << mesh.faces_vertices.size() << "\n";
-            for (int i = 0; i < 100; i++)
-            {
-                std::cout << mesh.faces_vertices.at(i) << ",";
-                counter++;
-                if (counter == 11)
-                {
-                    counter = 1;
-                std::cout << "\n";
-                }
-                
-                        
-            }
-            
+                 GL_STATIC_DRAW);            
         }
         rotated_model = glm::mat4();
         // Render dear imgui into screen
@@ -385,21 +381,6 @@ int main(int argc, char* argv[])
         // Check if any event has occured, button or mouse etc
         glfwPollEvents();
     }    
-    // int counter = 1;
-    // std::ofstream myfile;
-    // myfile.open ("example.txt");
-    // myfile << "Writing this to a file.\n";
-    // for (int i = 0; i < mesh.faces_vertices.size(); i++)
-    // {
-    //     myfile << mesh.faces_vertices.at(i) << ",";
-    //     counter++;
-    //     if (counter == 11)
-    //     {
-    //         counter = 1;
-    //         myfile << "\n";
-    //     }    
-    // }
-    // myfile.close();
     
     
     // clean up gui
