@@ -11,10 +11,11 @@ ANSA is a commercial software for viewing and editing FE-mesh files and this sma
 - Drag and rotate model (arcball-style, as is typical in CAD-programs)
 
 ## Usage and demo
-To launch program and read the included simple example input file "tubes.inp", run:
+Makefile is on the TODO list, but to run the example file "tubes.inp"
 ``new_ansa abaqus_examples/tubes.inp``
-
 ![](demo.gif)
 
+## TODO:
+Makefile, support more element types, catch input file errors, fix camera membership so it doesn't have to be global, etc.. sigh....
 
 
