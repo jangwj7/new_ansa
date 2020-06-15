@@ -18,9 +18,13 @@ To run the example file "tubes.inp", on Linux enter:
 
 ## TODO:
 Makefile, otherwise the vscode project file should help. 
+
 Support more element types
+
 Catch input file errors
+
 Fix camera object membership so it doesn't have to be global
+
 etc.. sigh....
 
 
