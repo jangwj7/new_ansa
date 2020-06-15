@@ -7,15 +7,20 @@ ANSA is a commercial software for viewing and editing FE-mesh files and this sma
 
 ## Features
 - Reads a text file following the ABAQUS syntax and displays a visual representation of the mesh
-- Color elements based on section
-- Drag and rotate model (arcball-style, as is typical in CAD-programs)
+- Zoom, drag and rotate model (arcball-style, as is typical in CAD-programs)
+- Simple GUI to overview elements, nodes, materials
+- "Single pass" wireframe on mesh
 
 ## Usage and demo
-Makefile is on the TODO list, but to run the example file "tubes.inp"
-``new_ansa abaqus_examples/tubes.inp``
+To run the example file "tubes.inp", on Linux enter:
+``./new_ansa abaqus_examples/tubes.inp``
 ![](demo.gif)
 
 ## TODO:
-Makefile, support more element types, catch input file errors, fix camera membership so it doesn't have to be global, etc.. sigh....
+Makefile, otherwise the vscode project file should help. 
+Support more element types
+Catch input file errors
+Fix camera object membership so it doesn't have to be global
+etc.. sigh....
 
 
